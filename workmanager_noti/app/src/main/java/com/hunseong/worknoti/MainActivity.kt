@@ -2,10 +2,34 @@ package com.hunseong.worknoti
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import androidx.work.WorkManager
+import com.hunseong.worknoti.Constants.PREF_NOTI_KEY
+import com.hunseong.worknoti.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val workManager = WorkManager.getInstance(applicationContext)
+        // 알림 스위치 변경값에 따라 sharedPreferences에 값 저장
+        binding.notiSwitch.setOnCheckedChangeListener { _, isChecked ->
+            Log.e("Shared", isChecked.toString())
+            val isChannelCreated = NotiManager.isNotificationChannelCreated(applicationContext)
+            if (isChecked) {
+                if (!isChannelCreated) {
+                    NotiManager.createNotificationChannel(applicationContext)
+                }
+                NotiManager.setScheduledNotification(workManager)
+            } else {
+                workManager.cancelAllWork()
+            }
+
+            SharedPreferencesManager.setBoolean(this, PREF_NOTI_KEY, isChecked)
+        }
     }
 }
