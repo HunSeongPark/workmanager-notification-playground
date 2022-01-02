@@ -1,6 +1,7 @@
 package com.hunseong.worknoti
 
 import android.content.Context
+import android.util.Log
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import androidx.work.Worker
@@ -41,6 +42,7 @@ class WorkerA(private val context: Context, params: WorkerParameters) : Worker(c
             NotiManager.createNotification(context)
         } else {
             // 이벤트 동작 시점이 아니라면 delay 계산 후 Work 등록
+            Log.e("Shared", "delay 후 Work 등록", )
             val delay = NotiManager.getNotiDelay()
             val workRequest = OneTimeWorkRequest.Builder(WorkerA::class.java)
                 .setInitialDelay(delay, TimeUnit.MILLISECONDS)

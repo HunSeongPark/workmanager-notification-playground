@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -120,16 +121,19 @@ object NotiManager {
         return when {
             // 현재 시각이 20시 이후일 경우 다음 날 오전 delay
             cal.get(Calendar.HOUR_OF_DAY) >= A_NIGHT -> {
+                Log.e("Shared", "20~", )
                 val nextDayCal = getScheduledCalendar(A_MORNING)
                 nextDayCal.add(Calendar.DAY_OF_YEAR, 1)
                 nextDayCal.timeInMillis - currentMillis
             }
             // 현재 시각이 08시 ~ 20시 사이일 경우 당일 오후 delay
             cal.get(Calendar.HOUR_OF_DAY) in A_MORNING until A_NIGHT -> {
+                Log.e("Shared", "08 ~ 20", )
                 getScheduledCalendar(A_NIGHT).timeInMillis - currentMillis
             }
             // 현재 시각이 08시 이전일 경우 당일 오전 delay
             cal.get(Calendar.HOUR_OF_DAY) < A_MORNING -> {
+                Log.e("Shared", "~08", )
                 getScheduledCalendar(A_MORNING).timeInMillis - currentMillis
             }
             else -> 0L
