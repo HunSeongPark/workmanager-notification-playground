@@ -55,7 +55,10 @@ object NotiManager {
     }
 
     fun setANoti(workManager: WorkManager) {
+        // 현 시점에서 바로 등록할 OneTimeWorkerRequest
         val oneTimeWorkerRequest = OneTimeWorkRequest.Builder(WorkerA::class.java).build()
+
+        // 12시간 후 재등록 할 PeriodicWorkRequest
         val periodicWorkRequest = PeriodicWorkRequest.Builder(WorkerA::class.java,
             12,
             TimeUnit.HOURS,
@@ -63,6 +66,7 @@ object NotiManager {
             TimeUnit.MINUTES).build()
 
         try {
+            // 이전 Work가 이미 finished라면 새로운 work 등록
             val workerInfoList = workManager.getWorkInfosForUniqueWorkLiveData(WORKER_A).value
             workerInfoList!!.forEach {
                 if (it.state.isFinished) {
@@ -73,6 +77,7 @@ object NotiManager {
                 }
             }
         } catch (e: Exception) {
+            // 이전에 등록된 Work가 없다면 새로운 Work 등록
             workManager.enqueue(oneTimeWorkerRequest)
             workManager.enqueueUniquePeriodicWork(WORKER_A,
                 ExistingPeriodicWorkPolicy.KEEP,
@@ -81,6 +86,7 @@ object NotiManager {
     }
 
     fun refreshScheduledNoti(context: Context) {
+        // 여러 이유로 소멸된 백그라운드 작업 대비 앱 실행 시 refresh
         val isNotiSwitch = SharedPreferencesManager.getBoolean(context, PREF_NOTI_KEY)
         if (isNotiSwitch) {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE)
@@ -94,12 +100,13 @@ object NotiManager {
                 NotificationManagerCompat.from(context).areNotificationsEnabled()
             }
             if (isNotiAllowed) {
-                NotiManager.setScheduledNotification(WorkManager.getInstance(context))
+                setScheduledNotification(WorkManager.getInstance(context))
             }
         }
     }
 
     fun getScheduledCalendar(time: Int): Calendar {
+        // 이벤트 시간 Calendar type으로 return
         val cal = Calendar.getInstance(TimeZone.getTimeZone(KOREA_TIMEZONE), Locale.KOREA)
         cal.set(Calendar.HOUR_OF_DAY, time)
         cal.set(Calendar.MINUTE, 0)
@@ -111,14 +118,17 @@ object NotiManager {
         val cal = Calendar.getInstance(TimeZone.getTimeZone(KOREA_TIMEZONE), Locale.KOREA)
         val currentMillis = cal.timeInMillis
         return when {
+            // 현재 시각이 20시 이후일 경우 다음 날 오전 delay
             cal.get(Calendar.HOUR_OF_DAY) >= A_NIGHT -> {
                 val nextDayCal = getScheduledCalendar(A_MORNING)
                 nextDayCal.add(Calendar.DAY_OF_YEAR, 1)
                 nextDayCal.timeInMillis - currentMillis
             }
+            // 현재 시각이 08시 ~ 20시 사이일 경우 당일 오후 delay
             cal.get(Calendar.HOUR_OF_DAY) in A_MORNING until A_NIGHT -> {
                 getScheduledCalendar(A_NIGHT).timeInMillis - currentMillis
             }
+            // 현재 시각이 08시 이전일 경우 당일 오전 delay
             cal.get(Calendar.HOUR_OF_DAY) < A_MORNING -> {
                 getScheduledCalendar(A_MORNING).timeInMillis - currentMillis
             }

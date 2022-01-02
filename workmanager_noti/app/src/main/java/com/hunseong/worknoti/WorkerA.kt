@@ -9,7 +9,6 @@ import com.hunseong.worknoti.Constants.A_MORNING
 import com.hunseong.worknoti.Constants.A_NIGHT
 import com.hunseong.worknoti.Constants.INTERVAL_HOUR
 import com.hunseong.worknoti.Constants.KOREA_TIMEZONE
-import com.hunseong.worknoti.Constants.WORKER_A
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -37,9 +36,11 @@ class WorkerA(private val context: Context, params: WorkerParameters) : Worker(c
 
         val isEventNotifyRange = isMorningNotifyRange || isNightNotifyRange
 
+        // 현재 Worker 실행시점이 이벤트 동작 시점이라면 바로 notify
         if (isEventNotifyRange) {
             NotiManager.createNotification(context)
         } else {
+            // 이벤트 동작 시점이 아니라면 delay 계산 후 Work 등록
             val delay = NotiManager.getNotiDelay()
             val workRequest = OneTimeWorkRequest.Builder(WorkerA::class.java)
                 .setInitialDelay(delay, TimeUnit.MILLISECONDS)
